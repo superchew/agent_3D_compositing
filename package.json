@@ -8,7 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "vendor:pack": "bash scripts/vendor-pack.sh",
+    "vendor:install": "bash scripts/vendor-install.sh",
+    "start:offline": "npx vite --host"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
