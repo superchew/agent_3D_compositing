@@ -1,0 +1,11 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/schema/acl/capability.json",
+  "identifier": "default",
+  "description": "Default capability for Scene Composer",
+  "platforms": ["macOS", "windows", "linux"],
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "opener:default"
+  ]
+}
