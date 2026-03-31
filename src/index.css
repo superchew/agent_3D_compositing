@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #0a0a0f;
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #1a1a2e;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 2px;
+}
+
+/* Panel styles */
+.panel {
+  background: #0f1117;
+  border: 1px solid #1e2535;
+}
+
+.panel-header {
+  background: #161b27;
+  border-bottom: 1px solid #1e2535;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  outline: none;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.btn-secondary {
+  background: #1e2535;
+  color: #94a3b8;
+  border: 1px solid #2d3748;
+}
+.btn-secondary:hover {
+  background: #263040;
+  color: #e2e8f0;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #64748b;
+}
+.btn-ghost:hover {
+  background: #1e2535;
+  color: #94a3b8;
+}
+
+.btn-active {
+  background: #1d4ed8;
+  color: white;
+}
+
+.input {
+  background: #0a0e18;
+  border: 1px solid #1e2535;
+  color: #e2e8f0;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  outline: none;
+  width: 100%;
+}
+.input:focus {
+  border-color: #3b82f6;
+}
+
+.color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  border: 2px solid rgba(255,255,255,0.15);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.color-swatch.active {
+  border-color: white;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+/* Matte label tag */
+.matte-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
