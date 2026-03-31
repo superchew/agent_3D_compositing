@@ -4,3 +4,6 @@ dist
 
 # Tauri
 src-tauri/target
+
+# Vendored dependencies (distribute separately, not via git)
+vendor
