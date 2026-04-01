@@ -34,3 +34,12 @@ This project runs in an Apple MDM managed environment. Key constraints:
 - CSP in `index.html` blocks all outbound network. Needs `'unsafe-eval'` for Vite and `worker-src blob:` for Three.js.
 - Tauri CSP in `src-tauri/tauri.conf.json` mirrors the HTML CSP (without ws:// for production).
 - When adding drei features, check if they load external assets (HDR, fonts, models). Use local alternatives instead.
+
+## Tauri Desktop Build
+
+- Requires Rust/Cargo (`source ~/.cargo/env` to activate)
+- First build needs `index.crates.io`, `static.crates.io`, `crates.io` temporarily allowlisted in sandbox
+- Tauri's DMG bundler may fail — create manually with `hdiutil create`
+- Output .app: `src-tauri/target/release/bundle/macos/Scene Composer.app` (~8.7MB)
+- Output DMG: `src-tauri/target/release/bundle/dmg/Scene Composer.dmg` (~3.7MB)
+- `src-tauri/gen/` is auto-generated — gitignored
