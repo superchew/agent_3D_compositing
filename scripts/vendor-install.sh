@@ -2,35 +2,49 @@
 set -euo pipefail
 
 # vendor-install.sh
-# Run this on a MANAGED machine to install dependencies from
-# vendored tarballs without any network access.
+# Run this on a MANAGED machine to install dependencies offline.
+#
+# Supports two modes:
+#   1. Archive mode: extracts vendor/node_modules.tar.gz (fastest)
+#   2. Tarball mode: installs from vendor/tarballs/*.tgz files
+#
+# Archive mode is preferred — use vendor-pack.sh to create it.
+# Tarball mode is a fallback — use download-deps.sh to get tarballs.
 
 VENDOR_DIR="vendor"
-MANIFEST="$VENDOR_DIR/manifest.json"
+ARCHIVE="$VENDOR_DIR/node_modules.tar.gz"
+TARBALL_DIR="$VENDOR_DIR/tarballs"
 
-if [ ! -f "$MANIFEST" ]; then
-  echo "ERROR: $MANIFEST not found."
-  echo "Run 'npm run vendor:pack' on an unrestricted machine first."
+if [ -f "$ARCHIVE" ]; then
+  echo "==> Found node_modules archive. Extracting..."
+  rm -rf node_modules
+  tar xzf "$ARCHIVE"
+  echo ""
+  echo "==> Done! Dependencies installed from archive."
+  echo "==> Run 'npm run start:offline' to launch the dev server."
+
+elif [ -d "$TARBALL_DIR" ] && ls "$TARBALL_DIR"/*.tgz >/dev/null 2>&1; then
+  COUNT=$(ls "$TARBALL_DIR"/*.tgz | wc -l | tr -d ' ')
+  echo "==> Found $COUNT tarballs in $TARBALL_DIR. Installing..."
+
+  # Build space-separated list of all tarball paths
+  INSTALL_ARGS=""
+  for TARBALL in "$TARBALL_DIR"/*.tgz; do
+    INSTALL_ARGS+=" $TARBALL"
+  done
+
+  npm install --legacy-peer-deps --offline $INSTALL_ARGS
+  echo ""
+  echo "==> Done! Dependencies installed from tarballs."
+  echo "==> Run 'npm run start:offline' to launch the dev server."
+
+else
+  echo "ERROR: No vendor data found."
+  echo ""
+  echo "Expected one of:"
+  echo "  $ARCHIVE          (from vendor-pack.sh on unrestricted machine)"
+  echo "  $TARBALL_DIR/*.tgz (from download-deps.sh)"
+  echo ""
+  echo "See scripts/ for setup instructions."
   exit 1
 fi
-
-echo "==> Reading manifest..."
-
-# Extract tarball list from manifest
-TARBALLS=$(node -e "
-  const manifest = require('./$MANIFEST');
-  manifest.tarballs.forEach(t => console.log(t));
-")
-
-# Build npm install command with all local tarballs
-INSTALL_ARGS=""
-for TARBALL in $TARBALLS; do
-  INSTALL_ARGS+=" $VENDOR_DIR/$TARBALL"
-done
-
-echo "==> Installing $(echo "$TARBALLS" | wc -l | tr -d ' ') packages from vendored tarballs..."
-npm install --offline $INSTALL_ARGS
-
-echo ""
-echo "==> Done! Dependencies installed from vendor/."
-echo "==> Run 'npm run start:offline' to launch the dev server."

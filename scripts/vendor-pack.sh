@@ -2,67 +2,50 @@
 set -euo pipefail
 
 # vendor-pack.sh
-# Run this on an UNRESTRICTED machine to pack all npm dependencies
-# into vendor/ for offline installation on managed machines.
+# Run this on an UNRESTRICTED machine to create the vendor/ bundle.
+#
+# Two modes:
+#   1. If node_modules exists: archive it directly
+#   2. If node_modules is empty: run npm install first, then archive
+#
+# The resulting vendor/ directory can be copied to managed machines.
 
 VENDOR_DIR="vendor"
-MANIFEST="$VENDOR_DIR/manifest.json"
+ARCHIVE="$VENDOR_DIR/node_modules.tar.gz"
 
-echo "==> Ensuring node_modules is up to date..."
-npm install
+if [ ! -d "node_modules" ] || [ -z "$(find node_modules -maxdepth 2 -type f 2>/dev/null | head -1)" ]; then
+  echo "==> node_modules is empty or missing. Installing dependencies..."
+  npm install --legacy-peer-deps
+fi
 
 echo "==> Cleaning vendor directory..."
 rm -rf "$VENDOR_DIR"
 mkdir -p "$VENDOR_DIR"
 
-echo "==> Packing dependencies..."
+echo "==> Archiving node_modules (this may take a moment)..."
+tar czf "$ARCHIVE" node_modules
 
-# Read all dependency names from package.json (both dependencies and devDependencies)
-DEPS=$(node -e "
-  const pkg = require('./package.json');
-  const all = {
-    ...pkg.dependencies,
-    ...pkg.devDependencies
-  };
-  console.log(Object.keys(all).join('\n'));
-")
+# Also copy package-lock.json for reproducibility
+cp package-lock.json "$VENDOR_DIR/package-lock.json" 2>/dev/null || true
 
-MANIFEST_ENTRIES="["
-FIRST=true
-
-for DEP in $DEPS; do
-  echo "  Packing $DEP..."
-  # npm pack outputs the tarball filename to stdout
-  TARBALL=$(npm pack "$DEP" --pack-destination "$VENDOR_DIR" 2>/dev/null)
-
-  if [ "$FIRST" = true ]; then
-    FIRST=false
-  else
-    MANIFEST_ENTRIES+=","
-  fi
-  MANIFEST_ENTRIES+="\"$TARBALL\""
-done
-
-MANIFEST_ENTRIES+="]"
-
-echo "$MANIFEST_ENTRIES" | node -e "
+# Write manifest
+node -e "
   const fs = require('fs');
-  let data = '';
-  process.stdin.on('data', chunk => data += chunk);
-  process.stdin.on('end', () => {
-    const tarballs = JSON.parse(data);
-    const manifest = {
-      generatedAt: new Date().toISOString(),
-      packageCount: tarballs.length,
-      tarballs: tarballs
-    };
-    fs.writeFileSync('$MANIFEST', JSON.stringify(manifest, null, 2));
-  });
+  const stats = fs.statSync('$ARCHIVE');
+  const manifest = {
+    generatedAt: new Date().toISOString(),
+    archiveSizeMB: (stats.size / 1024 / 1024).toFixed(1),
+    nodeVersion: process.version,
+    platform: process.platform,
+    arch: process.arch
+  };
+  fs.writeFileSync('$VENDOR_DIR/manifest.json', JSON.stringify(manifest, null, 2));
 "
 
+SIZE=$(du -sh "$ARCHIVE" | cut -f1)
 echo ""
-echo "==> Done! Packed $(echo "$DEPS" | wc -l | tr -d ' ') packages into $VENDOR_DIR/"
-echo "==> Manifest written to $MANIFEST"
+echo "==> Done! Archived node_modules to $ARCHIVE ($SIZE)"
+echo "==> Manifest written to $VENDOR_DIR/manifest.json"
 echo ""
 echo "Next steps:"
 echo "  1. Copy this project folder (including vendor/) to the managed machine"
