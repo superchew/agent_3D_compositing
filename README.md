@@ -20,17 +20,25 @@ A browser and desktop app for compositing 3D scenes used as visual prompt guidan
 ### In the browser
 
 ```bash
-npm install
+npm install --legacy-peer-deps
 npm run dev
 ```
 
-Open `http://localhost:5173` in any browser. To access from another device on the same network:
+Open `http://localhost:5173` in any browser.
+
+### Offline / managed environment setup
+
+If npm registry access is blocked, use vendored dependencies:
 
 ```bash
-npm run dev -- --host
-```
+# On an unrestricted machine:
+npm install --legacy-peer-deps
+npm run vendor:pack          # creates vendor/node_modules.tar.gz (~80MB)
 
-Then open the `Network:` URL shown in the terminal on your phone or tablet.
+# Copy project + vendor/ to the managed machine, then:
+npm run vendor:install       # extracts node_modules from archive
+npm run start:offline        # launches dev server
+```
 
 ### As a macOS desktop app (Tauri)
 
@@ -62,6 +70,9 @@ The desktop app uses macOS's built-in WebKit engine — no bundled browser. The 
 | `npm run preview` | Preview the production build locally |
 | `npm run tauri:dev` | Launch as a native macOS desktop app with hot reload |
 | `npm run tauri:build` | Package a distributable macOS `.app` bundle |
+| `npm run vendor:pack` | Archive node_modules for offline transfer |
+| `npm run vendor:install` | Install from vendored archive (no network) |
+| `npm run start:offline` | Start dev server (same as `dev`) |
 
 ---
 
@@ -79,7 +90,7 @@ The desktop app uses macOS's built-in WebKit engine — no bundled browser. The 
 
 ## Stack
 
-- [React 18](https://react.dev) + [Vite](https://vitejs.dev)
+- [React 19](https://react.dev) + [Vite](https://vitejs.dev)
 - [Three.js](https://threejs.org) via [@react-three/fiber](https://docs.pmnd.rs/react-three-fiber) and [@react-three/drei](https://github.com/pmndrs/drei)
 - [Zustand](https://github.com/pmndrs/zustand) for state
 - [Tailwind CSS v4](https://tailwindcss.com)

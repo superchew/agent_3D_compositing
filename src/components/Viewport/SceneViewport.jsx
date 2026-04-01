@@ -1,6 +1,6 @@
 import { useRef, useCallback, useEffect } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
-import { OrbitControls, Grid, Environment, GizmoHelper, GizmoViewport } from '@react-three/drei'
+import { OrbitControls, Grid, GizmoHelper, GizmoViewport } from '@react-three/drei'
 import * as THREE from 'three'
 import { useSceneStore } from '../../store/sceneStore'
 import HumanoidFigure from './HumanoidFigure'
@@ -97,7 +97,7 @@ export default function SceneViewport({ canvasRef }) {
             shadow-mapSize={[2048, 2048]}
           />
           <directionalLight position={[-3, 4, -3]} intensity={0.4} color="#8eb4ff" />
-          <Environment preset="city" background={false} />
+          <hemisphereLight args={['#b1e1ff', '#444444', 0.8]} />
         </>
       )}
       {matteMode && (
