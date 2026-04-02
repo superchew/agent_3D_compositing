@@ -104,6 +104,8 @@ export const useSceneStore = create((set, get) => ({
   backdropVisible: true,
   backdropColor: '#22c55e',
 
+  pendingCameraMove: null,   // { position: [x,y,z], target: [x,y,z] } | null
+
   // Active joint for pose editing
   activeJoint: 'hips',
 
@@ -147,6 +149,8 @@ export const useSceneStore = create((set, get) => ({
 
   setBackdropVisible: (v) => set({ backdropVisible: v }),
   setBackdropColor: (c) => set({ backdropColor: c }),
+  setCameraPreset: (position, target) => set({ pendingCameraMove: { position, target } }),
+  clearCameraMove: () => set({ pendingCameraMove: null }),
 
   removeObject: (id) => {
     set(s => ({

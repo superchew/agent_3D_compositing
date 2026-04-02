@@ -85,6 +85,21 @@ function SceneObjects({ onSelectObject }) {
   )
 }
 
+function CameraController({ controlsRef }) {
+  const { pendingCameraMove, clearCameraMove } = useSceneStore()
+
+  useEffect(() => {
+    const controls = controlsRef.current
+    if (!controls || !pendingCameraMove) return
+    controls.target.set(...pendingCameraMove.target)
+    controls.object.position.set(...pendingCameraMove.position)
+    controls.update()
+    clearCameraMove()
+  }, [pendingCameraMove, controlsRef, clearCameraMove])
+
+  return null
+}
+
 export default function SceneViewport({ canvasRef }) {
   const { selectObject, matteMode } = useSceneStore()
   const controlsRef = useRef()
@@ -179,6 +194,7 @@ export default function SceneViewport({ canvasRef }) {
       )}
 
       <CameraSyncer />
+      <CameraController controlsRef={controlsRef} />
     </Canvas>
   )
 }

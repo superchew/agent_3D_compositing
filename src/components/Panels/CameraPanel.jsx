@@ -21,7 +21,7 @@ const FOV_PRESETS = [
 ]
 
 export default function CameraPanel() {
-  const { cameraFov, setCameraFov, setCameraPosition, setCameraTarget } = useSceneStore()
+  const { cameraFov, setCameraFov, setCameraPreset } = useSceneStore()
 
   return (
     <div className="panel flex flex-col h-full">
@@ -66,10 +66,7 @@ export default function CameraPanel() {
               <button
                 key={p.label}
                 className="btn btn-secondary py-1.5 px-2 text-[10px] justify-center"
-                onClick={() => {
-                  setCameraPosition(p.position)
-                  setCameraTarget(p.target)
-                }}
+                onClick={() => setCameraPreset(p.position, p.target)}
               >
                 {p.label}
               </button>
