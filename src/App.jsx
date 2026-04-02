@@ -1,5 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react'
 import { useSceneStore } from './store/sceneStore'
+import { initUserDir, listModelFiles } from './lib/tauriBridge'
+import { detectFormat } from './lib/fileLoader'
 import Toolbar from './components/Toolbar/Toolbar'
 import SceneViewport from './components/Viewport/SceneViewport'
 import ScenePanel from './components/Panels/ScenePanel'
@@ -57,6 +59,29 @@ function RightPanel() {
 export default function App() {
   const canvasRef = useRef()
   const { setMode, mode } = useSceneStore()
+  const { setAvailableModels } = useSceneStore()
+
+  useEffect(() => {
+    async function loadModels() {
+      await initUserDir()
+      const paths = await listModelFiles()
+      const FIGURE_NAMES = ['human_fig_male', 'human_fig_female']
+      const models = paths.map(fp => {
+        const name = fp.split('/').pop().replace(/\.[^.]+$/, '')
+        const isFigure = FIGURE_NAMES.some(n => name.startsWith(n) && !name.includes('action') && !name.includes('idle') && !name.includes('seated') && !name.includes('lounging') && !name.includes('laying') && !name.includes('twist') && !name.includes('cute') && !name.includes('seductive'))
+        const isAnimation = name.includes('idle') || name.includes('action') || name.includes('seated') || name.includes('lounging') || name.includes('laying') || name.includes('twist') || name.includes('cute_sit') || name.includes('seductive')
+        return {
+          filePath: fp,
+          name,
+          format: detectFormat(fp),
+          isFigure,
+          isAnimation,
+        }
+      })
+      setAvailableModels(models)
+    }
+    loadModels()
+  }, [setAvailableModels])
 
   // Keyboard shortcuts
   useEffect(() => {
