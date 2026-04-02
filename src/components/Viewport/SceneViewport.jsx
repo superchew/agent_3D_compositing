@@ -1,6 +1,6 @@
 import { useRef, useCallback, useEffect } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
-import { OrbitControls, Grid, GizmoHelper, GizmoViewport } from '@react-three/drei'
+import { OrbitControls, TransformControls, Grid, GizmoHelper, GizmoViewport } from '@react-three/drei'
 import * as THREE from 'three'
 import { useSceneStore } from '../../store/sceneStore'
 import FigureModel from './FigureModel'
@@ -60,27 +60,57 @@ function Backdrop() {
   )
 }
 
-function SceneObjects({ onSelectObject }) {
-  const { objects, selectedId, mode, matteMode } = useSceneStore()
+function SceneObjectsAndGizmo({ onSelectObject }) {
+  const { objects, selectedId, mode, matteMode, gizmoMode, orbitEnabled, setOrbitEnabled, updateObject } = useSceneStore()
+  const selectedGroupRef = useRef(null)
 
   return (
     <>
       {objects.map(obj => {
         const isSelected = obj.id === selectedId
         if (!obj.visible) return null
-        if (obj.type === 'figure') {
-          return (
-            <group key={obj.id} onClick={(e) => { e.stopPropagation(); onSelectObject(obj.id) }}>
-              <FigureModel object={obj} isSelected={isSelected} />
-            </group>
-          )
+
+        const handleClick = (e) => {
+          e.stopPropagation()
+          onSelectObject(obj.id)
         }
+
         return (
-          <group key={obj.id} onClick={(e) => { e.stopPropagation(); onSelectObject(obj.id) }}>
-            <PropModel object={obj} isSelected={isSelected} matteMode={matteMode} />
+          <group
+            key={obj.id}
+            ref={isSelected ? selectedGroupRef : undefined}
+            onClick={handleClick}
+          >
+            {obj.type === 'figure'
+              ? <FigureModel object={obj} isSelected={isSelected} />
+              : <PropModel object={obj} isSelected={isSelected} matteMode={matteMode} />
+            }
           </group>
         )
       })}
+
+      {/* Transform gizmo for selected object */}
+      {selectedId && selectedGroupRef.current && !matteMode && (
+        <TransformControls
+          key={selectedId}
+          object={selectedGroupRef.current}
+          mode={gizmoMode}
+          onMouseDown={() => setOrbitEnabled(false)}
+          onMouseUp={() => setOrbitEnabled(true)}
+          onChange={() => {
+            const g = selectedGroupRef.current
+            if (!g) return
+            updateObject(selectedId, {
+              position: g.position.toArray(),
+              rotation: [
+                THREE.MathUtils.radToDeg(g.rotation.x),
+                THREE.MathUtils.radToDeg(g.rotation.y),
+                THREE.MathUtils.radToDeg(g.rotation.z),
+              ],
+            })
+          }}
+        />
+      )}
     </>
   )
 }
@@ -101,7 +131,7 @@ function CameraController({ controlsRef }) {
 }
 
 export default function SceneViewport({ canvasRef }) {
-  const { selectObject, matteMode } = useSceneStore()
+  const { selectObject, matteMode, orbitEnabled } = useSceneStore()
   const controlsRef = useRef()
 
   const handleSelectObject = useCallback((id) => {
@@ -151,7 +181,7 @@ export default function SceneViewport({ canvasRef }) {
         <ambientLight intensity={10} />
       )}
 
-      <SceneObjects onSelectObject={handleSelectObject} />
+      <SceneObjectsAndGizmo onSelectObject={handleSelectObject} />
       <Backdrop />
       <ClickPlane onClickGround={handleClickGround} />
 
@@ -180,6 +210,7 @@ export default function SceneViewport({ canvasRef }) {
       <OrbitControls
         ref={controlsRef}
         makeDefault
+        enabled={orbitEnabled}
         target={[0, 1, 0]}
         minDistance={0.5}
         maxDistance={50}

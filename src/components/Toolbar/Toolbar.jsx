@@ -6,12 +6,12 @@ const TOOLS = [
   { id: 'select', label: 'Select',    icon: MousePointer2,    shortcut: 'Q' },
   { id: 'pose',   label: 'Pose',      icon: PersonStanding,   shortcut: 'W' },
   { id: 'matte',  label: 'Matte',     icon: Layers,           shortcut: 'E' },
-  { id: 'camera', label: 'Camera',    icon: Camera,           shortcut: 'R' },
+  { id: 'camera', label: 'Camera',    icon: Camera,           shortcut: '' },
   { id: 'ref',    label: 'Reference', icon: BookImage,        shortcut: 'T' },
 ]
 
 export default function Toolbar({ onExportRender, onExportMatte }) {
-  const { mode, setMode, matteMode, setMatteMode, backdropVisible, setBackdropVisible, backdropColor, setBackdropColor, showRuleOfThirds, setShowRuleOfThirds, aspectRatio, setAspectRatio } = useSceneStore()
+  const { mode, setMode, matteMode, setMatteMode, backdropVisible, setBackdropVisible, backdropColor, setBackdropColor, showRuleOfThirds, setShowRuleOfThirds, aspectRatio, setAspectRatio, gizmoMode, setGizmoMode } = useSceneStore()
 
   return (
     <div className="flex items-center gap-1 bg-[#0f1117] border-b border-slate-800 px-3 h-11 select-none flex-shrink-0">
@@ -43,6 +43,24 @@ export default function Toolbar({ onExportRender, onExportMatte }) {
       })}
 
       <div className="flex-1" />
+
+      <div className="h-5 w-px bg-slate-800 mx-1" />
+
+      {/* Gizmo mode */}
+      <button
+        className={`btn py-1.5 px-2.5 text-[11px] gap-1 ${gizmoMode === 'translate' ? 'btn-active' : 'btn-secondary'}`}
+        onClick={() => setGizmoMode('translate')}
+        title="Move (G)"
+      >
+        ↔ Move
+      </button>
+      <button
+        className={`btn py-1.5 px-2.5 text-[11px] gap-1 ${gizmoMode === 'rotate' ? 'btn-active' : 'btn-secondary'}`}
+        onClick={() => setGizmoMode('rotate')}
+        title="Rotate (R)"
+      >
+        ↻ Rotate
+      </button>
 
       <div className="h-5 w-px bg-slate-800 mx-1" />
 

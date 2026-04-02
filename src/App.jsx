@@ -88,9 +88,14 @@ export default function App() {
   useEffect(() => {
     const handler = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
-      const map = { q: 'select', w: 'pose', e: 'matte', r: 'camera', t: 'ref' }
-      const next = map[e.key.toLowerCase()]
-      if (next) setMode(next)
+      const modeMap = { q: 'select', w: 'pose', e: 'matte', t: 'ref' }
+      if (modeMap[e.key.toLowerCase()]) {
+        setMode(modeMap[e.key.toLowerCase()])
+        return
+      }
+      // Gizmo shortcuts (Blender-style)
+      if (e.key.toLowerCase() === 'g') useSceneStore.getState().setGizmoMode('translate')
+      if (e.key.toLowerCase() === 'r') useSceneStore.getState().setGizmoMode('rotate')
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)

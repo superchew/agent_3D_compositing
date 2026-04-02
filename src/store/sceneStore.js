@@ -109,6 +109,9 @@ export const useSceneStore = create((set, get) => ({
   showRuleOfThirds: false,
   aspectRatio: '16:9',    // '16:9' | '9:16' | '2.39:1'
 
+  gizmoMode: 'translate',   // 'translate' | 'rotate'
+  orbitEnabled: true,
+
   // Active joint for pose editing
   activeJoint: 'hips',
 
@@ -156,6 +159,8 @@ export const useSceneStore = create((set, get) => ({
   clearCameraMove: () => set({ pendingCameraMove: null }),
   setShowRuleOfThirds: (v) => set({ showRuleOfThirds: v }),
   setAspectRatio: (r) => set({ aspectRatio: r }),
+  setGizmoMode: (m) => set({ gizmoMode: m }),
+  setOrbitEnabled: (v) => set({ orbitEnabled: v }),
 
   removeObject: (id) => {
     set(s => ({
