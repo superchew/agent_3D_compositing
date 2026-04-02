@@ -20,7 +20,7 @@ export default function Toolbar({ onExportRender, onExportMatte }) {
         <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
           <span className="text-[9px] font-bold text-white">3D</span>
         </div>
-        <span className="text-xs font-semibold text-slate-300 tracking-wide">Scene Composer</span>
+        <span className="text-xs font-semibold text-slate-300 tracking-wide">TV Featuring Composer</span>
       </div>
 
       <div className="h-5 w-px bg-slate-800 mx-1" />

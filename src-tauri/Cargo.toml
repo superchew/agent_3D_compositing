@@ -1,7 +1,7 @@
 [package]
-name = "scene-composer"
+name = "tv-featuring-composer"
 version = "0.1.0"
-description = "3D Scene Composer for AI artwork workflows"
+description = "TV Featuring Composer — 3D scene layout for AI artwork workflows"
 authors = []
 edition = "2021"
 
