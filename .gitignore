@@ -8,3 +8,4 @@ src-tauri/gen
 
 # Vendored dependencies (distribute separately, not via git)
 vendor
+.worktrees/
