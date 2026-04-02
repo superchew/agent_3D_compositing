@@ -3,7 +3,7 @@ import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { OrbitControls, Grid, GizmoHelper, GizmoViewport } from '@react-three/drei'
 import * as THREE from 'three'
 import { useSceneStore } from '../../store/sceneStore'
-import HumanoidFigure from './HumanoidFigure'
+import FigureModel from './FigureModel'
 import PropModel from './PropModel'
 
 function CameraSyncer() {
@@ -52,7 +52,7 @@ function SceneObjects({ onSelectObject }) {
         if (obj.type === 'figure') {
           return (
             <group key={obj.id} onClick={(e) => { e.stopPropagation(); onSelectObject(obj.id) }}>
-              <HumanoidFigure figure={obj} isSelected={isSelected} matteMode={matteMode} />
+              <FigureModel object={obj} isSelected={isSelected} />
             </group>
           )
         }

@@ -37,15 +37,17 @@ const defaultPose = () => {
   return pose
 }
 
-const defaultFigure = (position = [0, 0, 0]) => ({
+const defaultFigure = (filePath, position = [0, 0, 0]) => ({
   id: nextId(),
   type: 'figure',
-  name: 'Figure',
+  filePath,
+  name: filePath ? filePath.split('/').pop().replace(/\.[^.]+$/, '') : 'Figure',
   position,
   rotation: [0, 0, 0],
   scale: [1, 1, 1],
   matteColor: 'none',
-  pose: defaultPose(),
+  animationPaths: {},     // { label: filePath }
+  activeAnimation: null,
   visible: true,
 })
 
@@ -102,8 +104,8 @@ export const useSceneStore = create((set, get) => ({
   activeJoint: 'hips',
 
   // --- Object management ---
-  addFigure: (position) => {
-    const fig = defaultFigure(position || [0, 0, 0])
+  addFigure: (filePath, position) => {
+    const fig = defaultFigure(filePath, position || [0, 0, 0])
     set(s => ({ objects: [...s.objects, fig], selectedId: fig.id }))
   },
 
@@ -115,8 +117,28 @@ export const useSceneStore = create((set, get) => ({
   setAvailableModels: (models) => set({ availableModels: models, modelsLoaded: true }),
 
   addFileModel: (filePath, position) => {
-    const model = defaultFileModel(filePath, position || [0, 0, 0])
-    set(s => ({ objects: [...s.objects, model], selectedId: model.id }))
+    // Detect if this is a figure base mesh
+    const FIGURE_BASES = ['human_fig_male_001', 'human_fig_female_001']
+    const name = filePath.split('/').pop().replace(/\.[^.]+$/, '')
+    if (FIGURE_BASES.some(n => name === n)) {
+      const fig = defaultFigure(filePath, position || [0, 0, 0])
+      set(s => ({ objects: [...s.objects, fig], selectedId: fig.id }))
+    } else {
+      const model = defaultFileModel(filePath, position || [0, 0, 0])
+      set(s => ({ objects: [...s.objects, model], selectedId: model.id }))
+    }
+  },
+
+  setFigureAnimationPaths: (id, animationPaths) => {
+    set(s => ({
+      objects: s.objects.map(o => o.id === id ? { ...o, animationPaths } : o)
+    }))
+  },
+
+  setActiveAnimation: (id, label) => {
+    set(s => ({
+      objects: s.objects.map(o => o.id === id ? { ...o, activeAnimation: label } : o)
+    }))
   },
 
   removeObject: (id) => {

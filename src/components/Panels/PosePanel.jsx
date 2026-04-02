@@ -1,117 +1,98 @@
-import { useSceneStore, JOINT_NAMES } from '../../store/sceneStore'
-import { RotateCcw } from 'lucide-react'
+import { useEffect } from 'react'
+import { useSceneStore } from '../../store/sceneStore'
 
-const JOINT_GROUPS = [
-  { label: 'Spine', joints: ['hips', 'spine', 'chest', 'neck', 'head'] },
-  { label: 'Left Arm', joints: ['leftShoulder', 'leftUpperArm', 'leftForearm', 'leftHand'] },
-  { label: 'Right Arm', joints: ['rightShoulder', 'rightUpperArm', 'rightForearm', 'rightHand'] },
-  { label: 'Left Leg', joints: ['leftUpperLeg', 'leftLowerLeg', 'leftFoot'] },
-  { label: 'Right Leg', joints: ['rightUpperLeg', 'rightLowerLeg', 'rightFoot'] },
-]
-
-const PRESETS = [
-  { id: 'tpose', label: 'T-Pose' },
-  { id: 'apose', label: 'A-Pose' },
-  { id: 'standing', label: 'Standing' },
-  { id: 'sitting', label: 'Sitting' },
-  { id: 'walking', label: 'Walking' },
-  { id: 'arms_raised', label: 'Arms Up' },
-]
-
-function JointSlider({ figureId, joint, axis, value }) {
-  const setJointRotation = useSceneStore(s => s.setJointRotation)
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-[9px] text-slate-500 w-3 uppercase">{axis}</span>
-      <input
-        type="range"
-        min="-180"
-        max="180"
-        step="1"
-        value={value}
-        className="flex-1 h-1 accent-blue-500 cursor-pointer"
-        onChange={e => setJointRotation(figureId, joint, axis, parseFloat(e.target.value))}
-      />
-      <span className="text-[10px] text-slate-400 w-9 text-right tabular-nums">{Math.round(value)}°</span>
-    </div>
-  )
+// Maps figure base filename → animation clip filenames and their labels.
+// Keys must match the `name` field (filename without extension).
+const FIGURE_ANIMATIONS = {
+  'human_fig_male_001': [
+    { label: 'Idle',      file: 'human_fig_male_idle_001.fbx' },
+    { label: 'Idle 2',    file: 'human_fig_male_idle_002.fbx' },
+    { label: 'Seated',    file: 'human_fig_male_seated_001.fbx' },
+    { label: 'Lounging',  file: 'human_fig_male_lounging_001.fbx' },
+    { label: 'Action',    file: 'human_fig_male_action_001.fbx' },
+  ],
+  'human_fig_female_001': [
+    { label: 'Idle',          file: 'human_fig_female_idle_001.fbx' },
+    { label: 'Action',        file: 'human_fig_female_action_001.fbx' },
+    { label: 'Cute Sit',      file: 'human_fig_female_cute_sit_001.fbx' },
+    { label: 'Seated',        file: 'human_fig_female_seated_001.fbx' },
+    { label: 'Laying',        file: 'human_fig_female_laying_001.fbx' },
+    { label: 'Lounging',      file: 'human_fig_female_lounging_001.fbx' },
+    { label: 'Seductive',     file: 'human_fig_female_seductive_001.fbx' },
+    { label: 'Twist Standing',file: 'human_fig_female_twist_standing.fbx' },
+  ],
 }
 
 export default function PosePanel() {
-  const { objects, selectedId, activeJoint, setActiveJoint, resetPose, applyPresetPose } = useSceneStore()
-  const figure = objects.find(o => o.id === selectedId && o.type === 'figure')
+  const {
+    objects, selectedId,
+    setFigureAnimationPaths, setActiveAnimation, availableModels
+  } = useSceneStore()
 
-  if (!figure) {
+  const obj = objects.find(o => o.id === selectedId && o.type === 'figure')
+
+  // Wire up animation paths when a figure is selected
+  useEffect(() => {
+    if (!obj) return
+    const baseName = obj.name
+    const clips = FIGURE_ANIMATIONS[baseName]
+    if (!clips) return
+
+    // Find the models dir from any available model path
+    const anyModel = availableModels[0]
+    if (!anyModel) return
+    const dir = anyModel.filePath.substring(0, anyModel.filePath.lastIndexOf('/'))
+
+    const paths = {}
+    clips.forEach(({ label, file }) => {
+      paths[label] = `${dir}/${file}`
+    })
+    setFigureAnimationPaths(obj.id, paths)
+
+    // Set default animation
+    if (!obj.activeAnimation && clips[0]) {
+      setActiveAnimation(obj.id, clips[0].label)
+    }
+  }, [obj?.id, obj?.name, availableModels])
+
+  if (!obj) {
     return (
       <div className="panel flex flex-col h-full">
-        <div className="panel-header">Pose Editor</div>
-        <div className="p-4 text-xs text-slate-600 text-center">Select a figure to edit its pose</div>
+        <div className="panel-header">Pose / Animation</div>
+        <div className="p-4 text-xs text-slate-600 text-center">Select a figure</div>
       </div>
     )
   }
 
+  const baseName = obj.name
+  const clips = FIGURE_ANIMATIONS[baseName] || []
+
   return (
     <div className="panel flex flex-col h-full">
-      <div className="panel-header flex items-center justify-between">
-        <span>Pose Editor</span>
-        <button
-          className="btn btn-ghost py-0.5 px-1.5 text-[10px] flex items-center gap-1"
-          onClick={() => resetPose(figure.id)}
-        >
-          <RotateCcw size={10} /> Reset
-        </button>
-      </div>
-
-      <div className="p-2 border-b border-slate-800">
-        <div className="text-[10px] text-slate-500 mb-2 uppercase tracking-wider">Presets</div>
-        <div className="grid grid-cols-3 gap-1">
-          {PRESETS.map(p => (
+      <div className="panel-header">Pose / Animation</div>
+      <div className="p-3 space-y-3 overflow-y-auto flex-1">
+        <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+          Animation Preset
+        </div>
+        {clips.length === 0 && (
+          <div className="text-[10px] text-slate-600">No animations for this figure.</div>
+        )}
+        <div className="grid grid-cols-2 gap-1">
+          {clips.map(({ label }) => (
             <button
-              key={p.id}
-              className="btn btn-secondary py-1 px-2 text-[10px] justify-center"
-              onClick={() => applyPresetPose(figure.id, p.id)}
+              key={label}
+              className={`btn py-2 text-[10px] justify-center ${
+                obj.activeAnimation === label ? 'btn-active' : 'btn-secondary'
+              }`}
+              onClick={() => setActiveAnimation(obj.id, label)}
             >
-              {p.label}
+              {label}
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
-        {JOINT_GROUPS.map(group => (
-          <div key={group.label} className="border-b border-slate-800/60">
-            <div className="text-[10px] font-semibold text-slate-500 px-3 pt-2 pb-1 uppercase tracking-wider">
-              {group.label}
-            </div>
-            {group.joints.map(joint => {
-              const isActive = activeJoint === joint
-              const pose = figure.pose[joint] || { x: 0, y: 0, z: 0 }
-              return (
-                <div
-                  key={joint}
-                  className={`px-3 pb-2 cursor-pointer ${isActive ? 'bg-blue-900/20' : ''}`}
-                  onClick={() => setActiveJoint(joint)}
-                >
-                  <div className="text-[10px] text-slate-400 mb-1 flex items-center gap-1">
-                    <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-blue-400' : 'bg-slate-600'}`} />
-                    {joint}
-                  </div>
-                  <div className="space-y-1">
-                    {['x', 'y', 'z'].map(axis => (
-                      <JointSlider
-                        key={axis}
-                        figureId={figure.id}
-                        joint={joint}
-                        axis={axis}
-                        value={pose[axis] ?? 0}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        ))}
+        <div className="text-[10px] text-slate-600 bg-slate-900 rounded p-2 border border-slate-800 mt-2">
+          Animation plays in loop. Use the viewport to view the pose, then compose your shot.
+        </div>
       </div>
     </div>
   )
