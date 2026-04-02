@@ -100,6 +100,10 @@ export const useSceneStore = create((set, get) => ({
   availableModels: [],   // Array of { filePath, name, format, isFigure }
   modelsLoaded: false,
 
+  // Backdrop
+  backdropVisible: true,
+  backdropColor: '#22c55e',
+
   // Active joint for pose editing
   activeJoint: 'hips',
 
@@ -140,6 +144,9 @@ export const useSceneStore = create((set, get) => ({
       objects: s.objects.map(o => o.id === id ? { ...o, activeAnimation: label } : o)
     }))
   },
+
+  setBackdropVisible: (v) => set({ backdropVisible: v }),
+  setBackdropColor: (c) => set({ backdropColor: c }),
 
   removeObject: (id) => {
     set(s => ({

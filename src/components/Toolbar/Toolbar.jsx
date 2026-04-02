@@ -11,7 +11,7 @@ const TOOLS = [
 ]
 
 export default function Toolbar({ onExportRender, onExportMatte }) {
-  const { mode, setMode, matteMode, setMatteMode } = useSceneStore()
+  const { mode, setMode, matteMode, setMatteMode, backdropVisible, setBackdropVisible, backdropColor, setBackdropColor } = useSceneStore()
 
   return (
     <div className="flex items-center gap-1 bg-[#0f1117] border-b border-slate-800 px-3 h-11 select-none flex-shrink-0">
@@ -43,6 +43,24 @@ export default function Toolbar({ onExportRender, onExportMatte }) {
       })}
 
       <div className="flex-1" />
+
+      <div className="h-5 w-px bg-slate-800 mx-1" />
+
+      {/* Backdrop toggle */}
+      <button
+        className={`btn py-1.5 px-2.5 text-[11px] gap-1.5 ${backdropVisible ? 'btn-active' : 'btn-secondary'}`}
+        onClick={() => setBackdropVisible(!backdropVisible)}
+        title="Toggle backdrop"
+      >
+        🎬 Backdrop
+      </button>
+      <input
+        type="color"
+        value={backdropColor}
+        title="Backdrop color"
+        className="w-7 h-7 rounded cursor-pointer border border-slate-700 bg-transparent"
+        onChange={e => setBackdropColor(e.target.value)}
+      />
 
       {/* Matte toggle */}
       <button

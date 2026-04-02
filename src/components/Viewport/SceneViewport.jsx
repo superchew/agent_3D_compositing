@@ -41,6 +41,25 @@ function ClickPlane({ onClickGround }) {
   )
 }
 
+function Backdrop() {
+  const { backdropVisible, backdropColor, matteMode } = useSceneStore()
+  if (!backdropVisible || matteMode) return null
+  return (
+    <group>
+      {/* Vertical back wall */}
+      <mesh position={[0, 2.5, -4]} receiveShadow>
+        <planeGeometry args={[14, 8]} />
+        <meshStandardMaterial color={backdropColor} roughness={1} metalness={0} />
+      </mesh>
+      {/* Floor continuation — blends into wall */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, -1.5]} receiveShadow>
+        <planeGeometry args={[14, 5]} />
+        <meshStandardMaterial color={backdropColor} roughness={1} metalness={0} />
+      </mesh>
+    </group>
+  )
+}
+
 function SceneObjects({ onSelectObject }) {
   const { objects, selectedId, mode, matteMode } = useSceneStore()
 
@@ -105,6 +124,7 @@ export default function SceneViewport({ canvasRef }) {
       )}
 
       <SceneObjects onSelectObject={handleSelectObject} />
+      <Backdrop />
       <ClickPlane onClickGround={handleClickGround} />
 
       {!matteMode && (
