@@ -61,6 +61,18 @@ const defaultModel = (modelType, position = [0, 0, 0]) => ({
   visible: true,
 })
 
+const defaultFileModel = (filePath, position = [0, 0, 0]) => ({
+  id: nextId(),
+  type: 'fileModel',          // new type alongside 'model' and 'figure'
+  filePath,
+  name: filePath.split('/').pop().replace(/\.[^.]+$/, ''),
+  position,
+  rotation: [0, 0, 0],
+  scale: [1, 1, 1],
+  matteColor: 'none',
+  visible: true,
+})
+
 export const useSceneStore = create((set, get) => ({
   // Scene objects
   objects: [],
@@ -82,6 +94,10 @@ export const useSceneStore = create((set, get) => ({
   cameraPosition: [0, 1.6, 5],
   cameraTarget: [0, 1, 0],
 
+  // Available models scanned from ~/Documents/TV Featuring Composer/models/
+  availableModels: [],   // Array of { filePath, name, format, isFigure }
+  modelsLoaded: false,
+
   // Active joint for pose editing
   activeJoint: 'hips',
 
@@ -93,6 +109,13 @@ export const useSceneStore = create((set, get) => ({
 
   addModel: (modelType, position) => {
     const model = defaultModel(modelType, position || [0, 0, 0])
+    set(s => ({ objects: [...s.objects, model], selectedId: model.id }))
+  },
+
+  setAvailableModels: (models) => set({ availableModels: models, modelsLoaded: true }),
+
+  addFileModel: (filePath, position) => {
+    const model = defaultFileModel(filePath, position || [0, 0, 0])
     set(s => ({ objects: [...s.objects, model], selectedId: model.id }))
   },
 
