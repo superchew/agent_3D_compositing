@@ -11,7 +11,7 @@ const TOOLS = [
 ]
 
 export default function Toolbar({ onExportRender, onExportMatte }) {
-  const { mode, setMode, matteMode, setMatteMode, backdropVisible, setBackdropVisible, backdropColor, setBackdropColor } = useSceneStore()
+  const { mode, setMode, matteMode, setMatteMode, backdropVisible, setBackdropVisible, backdropColor, setBackdropColor, showRuleOfThirds, setShowRuleOfThirds, aspectRatio, setAspectRatio } = useSceneStore()
 
   return (
     <div className="flex items-center gap-1 bg-[#0f1117] border-b border-slate-800 px-3 h-11 select-none flex-shrink-0">
@@ -61,6 +61,29 @@ export default function Toolbar({ onExportRender, onExportMatte }) {
         className="w-7 h-7 rounded cursor-pointer border border-slate-700 bg-transparent"
         onChange={e => setBackdropColor(e.target.value)}
       />
+
+      <div className="h-5 w-px bg-slate-800 mx-1" />
+
+      {/* Rule of thirds */}
+      <button
+        className={`btn py-1.5 px-2.5 text-[11px] ${showRuleOfThirds ? 'btn-active' : 'btn-secondary'}`}
+        onClick={() => setShowRuleOfThirds(!showRuleOfThirds)}
+        title="Rule of thirds"
+      >
+        ⊞ Thirds
+      </button>
+
+      {/* Aspect ratio */}
+      {['16:9', '9:16', '2.39:1'].map(r => (
+        <button
+          key={r}
+          className={`btn py-1.5 px-2 text-[10px] ${aspectRatio === r ? 'btn-active' : 'btn-secondary'}`}
+          onClick={() => setAspectRatio(r)}
+          title={r}
+        >
+          {r}
+        </button>
+      ))}
 
       {/* Matte toggle */}
       <button

@@ -11,6 +11,7 @@ import MattePanel from './components/Panels/MattePanel'
 import ReferencePanel from './components/Panels/ReferencePanel'
 import CameraPanel from './components/Panels/CameraPanel'
 import ModelLibrary from './components/Panels/ModelLibrary'
+import ViewportOverlays from './components/Viewport/ViewportOverlays'
 
 function ReferenceOverlay() {
   const { referencePhoto, referenceOpacity } = useSceneStore()
@@ -139,6 +140,7 @@ export default function App() {
         <div className="flex-1 relative overflow-hidden">
           <SceneViewport canvasRef={canvasRef} />
           <ReferenceOverlay />
+          <ViewportOverlays />
 
           {/* Mode badge */}
           <div className="absolute top-3 left-3 z-20">

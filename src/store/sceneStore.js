@@ -106,6 +106,9 @@ export const useSceneStore = create((set, get) => ({
 
   pendingCameraMove: null,   // { position: [x,y,z], target: [x,y,z] } | null
 
+  showRuleOfThirds: false,
+  aspectRatio: '16:9',    // '16:9' | '9:16' | '2.39:1'
+
   // Active joint for pose editing
   activeJoint: 'hips',
 
@@ -151,6 +154,8 @@ export const useSceneStore = create((set, get) => ({
   setBackdropColor: (c) => set({ backdropColor: c }),
   setCameraPreset: (position, target) => set({ pendingCameraMove: { position, target } }),
   clearCameraMove: () => set({ pendingCameraMove: null }),
+  setShowRuleOfThirds: (v) => set({ showRuleOfThirds: v }),
+  setAspectRatio: (r) => set({ aspectRatio: r }),
 
   removeObject: (id) => {
     set(s => ({
