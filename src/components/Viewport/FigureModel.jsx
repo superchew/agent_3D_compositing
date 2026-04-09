@@ -142,6 +142,35 @@ export default function FigureModel({ object, isSelected, matteMode }) {
   return (
     <group>
       <primitive object={charObj} />
+      {/* Composition guide lines */}
+      {!matteMode && (
+        <group>
+          {/* Eye line — horizontal */}
+          <line>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                array={new Float32Array([-0.3, 1.58, 0.05, 0.3, 1.58, 0.05])}
+                count={2}
+                itemSize={3}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#ffffff" opacity={0.25} transparent />
+          </line>
+          {/* Midline — vertical */}
+          <line>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                array={new Float32Array([0, 0, 0.05, 0, 1.75, 0.05])}
+                count={2}
+                itemSize={3}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#ffffff" opacity={0.15} transparent />
+          </line>
+        </group>
+      )}
     </group>
   )
 }
