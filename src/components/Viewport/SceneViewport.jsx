@@ -44,19 +44,23 @@ function ClickPlane({ onClickGround }) {
 function Backdrop() {
   const { backdropVisible, backdropColor, matteMode } = useSceneStore()
   if (!backdropVisible) return null
-  const color = matteMode ? '#000000' : backdropColor
-  const Mat = matteMode ? 'meshBasicMaterial' : 'meshStandardMaterial'
   return (
     <group>
       {/* Vertical back wall */}
       <mesh position={[0, 2.5, -4]} receiveShadow={!matteMode}>
         <planeGeometry args={[14, 8]} />
-        <Mat color={color} roughness={1} metalness={0} />
+        {matteMode
+          ? <meshBasicMaterial color={backdropColor} />
+          : <meshStandardMaterial color={backdropColor} roughness={1} metalness={0} />
+        }
       </mesh>
       {/* Floor continuation — blends into wall */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, -1.5]} receiveShadow={!matteMode}>
         <planeGeometry args={[14, 5]} />
-        <Mat color={color} roughness={1} metalness={0} />
+        {matteMode
+          ? <meshBasicMaterial color={backdropColor} />
+          : <meshStandardMaterial color={backdropColor} roughness={1} metalness={0} />
+        }
       </mesh>
     </group>
   )
