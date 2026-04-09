@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
 import { applyClayMaterial } from '../../lib/clayMaterial'
 import { readModelFile } from '../../lib/tauriBridge'
+import { MATTE_COLORS } from '../../store/sceneStore'
 
 const deg = (d) => (d * Math.PI) / 180
 
@@ -23,8 +24,8 @@ async function loadFBXFromPath(filePath) {
  * object.animationPaths  — { [label]: filePath } map of animation clips
  * object.activeAnimation — label of currently selected animation
  */
-export default function FigureModel({ object, isSelected }) {
-  const { filePath, animationPaths = {}, activeAnimation } = object
+export default function FigureModel({ object, isSelected, matteMode }) {
+  const { filePath, animationPaths = {}, activeAnimation, matteColor } = object
   const [charObj, setCharObj] = useState(null)
   const mixerRef = useRef(null)
   const actionsRef = useRef({})
@@ -102,6 +103,29 @@ export default function FigureModel({ object, isSelected }) {
   useFrame((_, delta) => {
     mixerRef.current?.update(delta)
   })
+
+  // Apply matte color override when matteMode changes
+  useEffect(() => {
+    if (!charObj) return
+    const matteEntry = MATTE_COLORS.find(m => m.id === matteColor)
+    charObj.traverse((child) => {
+      if (child.isMesh || child.isSkinnedMesh) {
+        if (matteMode && matteEntry?.rgb) {
+          child.material = new THREE.MeshBasicMaterial({
+            color: new THREE.Color(...matteEntry.rgb),
+          })
+        } else {
+          child.material = new THREE.MeshStandardMaterial({
+            color: '#94a3b8',
+            roughness: 0.75,
+            metalness: 0.0,
+          })
+          child.castShadow = true
+          child.receiveShadow = true
+        }
+      }
+    })
+  }, [charObj, matteMode, matteColor])
 
   if (!charObj) {
     // Placeholder while loading

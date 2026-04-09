@@ -102,8 +102,9 @@ const PROCEDURAL_MAP = {
 
 // ── File-based model loader ────────────────────────────────────────────────
 
-function FileModel({ filePath }) {
+function FileModel({ filePath, matteMode, matteColor }) {
   const [obj3d, setObj3d] = useState(null)
+  const matteEntry = MATTE_COLORS.find(m => m.id === matteColor)
 
   useEffect(() => {
     let cancelled = false
@@ -123,6 +124,28 @@ function FileModel({ filePath }) {
     return () => { cancelled = true }
   }, [filePath])
 
+  // Apply matte color override when matteMode changes
+  useEffect(() => {
+    if (!obj3d) return
+    obj3d.traverse((child) => {
+      if (child.isMesh || child.isSkinnedMesh) {
+        if (matteMode && matteEntry?.rgb) {
+          child.material = new THREE.MeshBasicMaterial({
+            color: new THREE.Color(...matteEntry.rgb),
+          })
+        } else {
+          child.material = new THREE.MeshStandardMaterial({
+            color: '#94a3b8',
+            roughness: 0.75,
+            metalness: 0.0,
+          })
+          child.castShadow = true
+          child.receiveShadow = true
+        }
+      }
+    })
+  }, [obj3d, matteMode, matteColor])
+
   if (!obj3d) return null
   return <primitive object={obj3d} />
 }
@@ -140,7 +163,7 @@ export default function PropModel({ object, isSelected, matteMode }) {
   return (
     <group>
       {type === 'fileModel' && filePath
-        ? <FileModel filePath={filePath} />
+        ? <FileModel filePath={filePath} matteMode={matteMode} matteColor={matteColor} />
         : (() => {
             const Component = PROCEDURAL_MAP[modelType] || Box
             return <Component color={color} />

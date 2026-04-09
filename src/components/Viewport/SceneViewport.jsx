@@ -87,7 +87,7 @@ function SceneObjectsAndGizmo({ onSelectObject }) {
             scale={obj.scale}
           >
             {obj.type === 'figure'
-              ? <FigureModel object={obj} isSelected={isSelected} />
+              ? <FigureModel object={obj} isSelected={isSelected} matteMode={matteMode} />
               : <PropModel object={obj} isSelected={isSelected} matteMode={matteMode} />
             }
           </group>
