@@ -24,11 +24,12 @@ async function loadFBXFromPath(filePath) {
  * object.activeAnimation — label of currently selected animation
  */
 export default function FigureModel({ object, isSelected }) {
-  const { filePath, animationPaths = {}, activeAnimation, position, rotation, scale } = object
+  const { filePath, animationPaths = {}, activeAnimation } = object
   const [charObj, setCharObj] = useState(null)
   const mixerRef = useRef(null)
   const actionsRef = useRef({})
   const currentActionRef = useRef(null)
+  const animPathsKeyRef = useRef('')
 
   // Load character mesh once
   useEffect(() => {
@@ -45,12 +46,19 @@ export default function FigureModel({ object, isSelected }) {
     return () => { cancelled = true }
   }, [filePath])
 
-  // Load animation clips whenever animationPaths changes
+  // Load animation clips whenever animationPaths actually changes (by key comparison)
   useEffect(() => {
     if (!charObj || !mixerRef.current) return
+    const pathsKey = JSON.stringify(animationPaths)
+    if (pathsKey === animPathsKeyRef.current) return
+    animPathsKeyRef.current = pathsKey
+
     let cancelled = false
     const mixer = mixerRef.current
+    // Stop all existing actions
+    mixer.stopAllAction()
     actionsRef.current = {}
+    currentActionRef.current = null
 
     async function loadClips() {
       for (const [label, animPath] of Object.entries(animationPaths)) {
@@ -70,22 +78,23 @@ export default function FigureModel({ object, isSelected }) {
       }
       // Play the active animation after all clips load
       if (!cancelled && activeAnimation && actionsRef.current[activeAnimation]) {
-        actionsRef.current[activeAnimation].play()
-        currentActionRef.current = actionsRef.current[activeAnimation]
+        const action = actionsRef.current[activeAnimation]
+        action.reset().play()
+        currentActionRef.current = action
       }
     }
     loadClips()
     return () => { cancelled = true }
-  }, [charObj, animationPaths])
+  }, [charObj, animationPaths, activeAnimation])
 
   // Switch animations when activeAnimation changes
   useEffect(() => {
     const next = actionsRef.current[activeAnimation]
     if (!next) return
     if (currentActionRef.current && currentActionRef.current !== next) {
-      currentActionRef.current.fadeOut(0.3)
+      currentActionRef.current.stop()
     }
-    next.reset().fadeIn(0.3).play()
+    next.reset().play()
     currentActionRef.current = next
   }, [activeAnimation])
 
@@ -97,7 +106,7 @@ export default function FigureModel({ object, isSelected }) {
   if (!charObj) {
     // Placeholder while loading
     return (
-      <group position={position} rotation={rotation.map(deg)} scale={scale}>
+      <group>
         <mesh>
           <capsuleGeometry args={[0.2, 1.2, 8, 16]} />
           <meshStandardMaterial color="#475569" roughness={0.8} wireframe />
@@ -107,7 +116,7 @@ export default function FigureModel({ object, isSelected }) {
   }
 
   return (
-    <group position={position} rotation={rotation.map(deg)} scale={scale}>
+    <group>
       <primitive object={charObj} />
     </group>
   )

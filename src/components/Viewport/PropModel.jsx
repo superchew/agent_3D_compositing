@@ -130,7 +130,7 @@ function FileModel({ filePath }) {
 // ── Main export ────────────────────────────────────────────────────────────
 
 export default function PropModel({ object, isSelected, matteMode }) {
-  const { modelType, filePath, position, rotation, scale, matteColor, type } = object
+  const { modelType, filePath, matteColor, type } = object
   const matteEntry = MATTE_COLORS.find(m => m.id === matteColor)
 
   const color = matteMode && matteEntry?.rgb
@@ -138,11 +138,7 @@ export default function PropModel({ object, isSelected, matteMode }) {
     : '#94a3b8'
 
   return (
-    <group
-      position={position}
-      rotation={rotation.map(deg)}
-      scale={scale}
-    >
+    <group>
       {type === 'fileModel' && filePath
         ? <FileModel filePath={filePath} />
         : (() => {

@@ -75,11 +75,16 @@ function SceneObjectsAndGizmo({ onSelectObject }) {
           onSelectObject(obj.id)
         }
 
+        const deg = (d) => (d * Math.PI) / 180
+
         return (
           <group
             key={obj.id}
             ref={isSelected ? selectedGroupRef : undefined}
             onClick={handleClick}
+            position={obj.position}
+            rotation={obj.rotation.map(deg)}
+            scale={obj.scale}
           >
             {obj.type === 'figure'
               ? <FigureModel object={obj} isSelected={isSelected} />
