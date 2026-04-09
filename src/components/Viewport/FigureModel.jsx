@@ -24,6 +24,30 @@ async function loadFBXFromPath(filePath) {
  * object.animationPaths  — { [label]: filePath } map of animation clips
  * object.activeAnimation — label of currently selected animation
  */
+// Bone names for guide lines (Mixamo namespace, scaled 0.01)
+const MIDLINE_BONES = [
+  'mixamorig:HeadTop_End',
+  'mixamorig:Head',
+  'mixamorig:Neck',
+  'mixamorig:Spine2',
+  'mixamorig:Spine1',
+  'mixamorig:Spine',
+  'mixamorig:Hips',
+]
+const EYE_LINE_BONES_L = ['mixamorig:LeftEye', 'mixamorig:Head']
+const EYE_LINE_BONES_R = ['mixamorig:RightEye', 'mixamorig:Head']
+
+/**
+ * Finds a bone by name in the skeleton hierarchy.
+ */
+function findBone(root, name) {
+  let found = null
+  root.traverse((child) => {
+    if (child.isBone && child.name === name) found = child
+  })
+  return found
+}
+
 export default function FigureModel({ object, isSelected, matteMode }) {
   const { filePath, animationPaths = {}, activeAnimation, matteColor } = object
   const [charObj, setCharObj] = useState(null)
@@ -31,6 +55,9 @@ export default function FigureModel({ object, isSelected, matteMode }) {
   const actionsRef = useRef({})
   const currentActionRef = useRef(null)
   const animPathsKeyRef = useRef('')
+  const midlineRef = useRef(null)
+  const eyeLineRef = useRef(null)
+  const bonesRef = useRef({ midline: [], eyeL: null, eyeR: null, head: null })
 
   // Load character mesh once
   useEffect(() => {
@@ -43,6 +70,11 @@ export default function FigureModel({ object, isSelected, matteMode }) {
       fbx.scale.setScalar(0.01)
       setCharObj(fbx)
       mixerRef.current = new THREE.AnimationMixer(fbx)
+      // Resolve skeleton bones for guide lines
+      bonesRef.current.midline = MIDLINE_BONES.map(n => findBone(fbx, n)).filter(Boolean)
+      bonesRef.current.eyeL = findBone(fbx, 'mixamorig:LeftEye')
+      bonesRef.current.eyeR = findBone(fbx, 'mixamorig:RightEye')
+      bonesRef.current.head = findBone(fbx, 'mixamorig:Head')
     }).catch(err => console.warn('FigureModel load error:', err))
     return () => { cancelled = true }
   }, [filePath])
@@ -99,9 +131,50 @@ export default function FigureModel({ object, isSelected, matteMode }) {
     currentActionRef.current = next
   }, [activeAnimation])
 
-  // Update mixer each frame
+  // Update mixer and guide lines each frame
+  const _bonePos = useRef(new THREE.Vector3())
   useFrame((_, delta) => {
     mixerRef.current?.update(delta)
+
+    // Update midline from bone positions
+    const midGeo = midlineRef.current
+    const { midline, eyeL, eyeR, head } = bonesRef.current
+    if (midGeo && midline.length > 0) {
+      const posArr = midGeo.attributes.position
+      for (let i = 0; i < midline.length; i++) {
+        midline[i].getWorldPosition(_bonePos.current)
+        // Convert from world to local (charObj parent is scaled group)
+        if (charObj?.parent) charObj.parent.worldToLocal(_bonePos.current)
+        posArr.setXYZ(i, _bonePos.current.x, _bonePos.current.y, _bonePos.current.z)
+      }
+      posArr.needsUpdate = true
+    }
+
+    // Update eye line from bone positions
+    const eyeGeo = eyeLineRef.current
+    if (eyeGeo && head) {
+      const posArr = eyeGeo.attributes.position
+      const left = eyeL || head
+      const right = eyeR || head
+
+      left.getWorldPosition(_bonePos.current)
+      if (charObj?.parent) charObj.parent.worldToLocal(_bonePos.current)
+      const lx = _bonePos.current.x
+      const ly = _bonePos.current.y
+      const lz = _bonePos.current.z
+
+      right.getWorldPosition(_bonePos.current)
+      if (charObj?.parent) charObj.parent.worldToLocal(_bonePos.current)
+      const rx = _bonePos.current.x
+      const ry = _bonePos.current.y
+      const rz = _bonePos.current.z
+
+      // Extend slightly beyond the eyes
+      const dx = rx - lx, dy = ry - ly, dz = rz - lz
+      posArr.setXYZ(0, lx - dx * 1.5, ly - dy * 1.5, lz - dz * 1.5)
+      posArr.setXYZ(1, rx + dx * 1.5, ry + dy * 1.5, rz + dz * 1.5)
+      posArr.needsUpdate = true
+    }
   })
 
   // Apply matte color override when matteMode changes
@@ -139,38 +212,36 @@ export default function FigureModel({ object, isSelected, matteMode }) {
     )
   }
 
+  // Max points for midline geometry (pre-allocate for all bones)
+  const midlineCount = MIDLINE_BONES.length
+
   return (
     <group>
       <primitive object={charObj} />
-      {/* Composition guide lines */}
-      {!matteMode && (
-        <group>
-          {/* Eye line — horizontal */}
-          <line>
-            <bufferGeometry>
-              <bufferAttribute
-                attach="attributes-position"
-                array={new Float32Array([-0.3, 1.58, 0.05, 0.3, 1.58, 0.05])}
-                count={2}
-                itemSize={3}
-              />
-            </bufferGeometry>
-            <lineBasicMaterial color="#ffffff" opacity={0.25} transparent />
-          </line>
-          {/* Midline — vertical */}
-          <line>
-            <bufferGeometry>
-              <bufferAttribute
-                attach="attributes-position"
-                array={new Float32Array([0, 0, 0.05, 0, 1.75, 0.05])}
-                count={2}
-                itemSize={3}
-              />
-            </bufferGeometry>
-            <lineBasicMaterial color="#ffffff" opacity={0.15} transparent />
-          </line>
-        </group>
-      )}
+      {/* Midline — traces spine bones */}
+      <line>
+        <bufferGeometry ref={midlineRef}>
+          <bufferAttribute
+            attach="attributes-position"
+            array={new Float32Array(midlineCount * 3)}
+            count={midlineCount}
+            itemSize={3}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ffffff" opacity={0.2} transparent depthTest={false} />
+      </line>
+      {/* Eye line — traces between eye bones */}
+      <line>
+        <bufferGeometry ref={eyeLineRef}>
+          <bufferAttribute
+            attach="attributes-position"
+            array={new Float32Array(6)}
+            count={2}
+            itemSize={3}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ffffff" opacity={0.3} transparent depthTest={false} />
+      </line>
     </group>
   )
 }
