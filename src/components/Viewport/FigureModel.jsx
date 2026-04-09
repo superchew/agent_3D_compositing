@@ -24,18 +24,16 @@ async function loadFBXFromPath(filePath) {
  * object.animationPaths  — { [label]: filePath } map of animation clips
  * object.activeAnimation — label of currently selected animation
  */
-// Bone names for guide lines (Mixamo namespace, scaled 0.01)
+// Bone names for guide lines (Mixamo namespace — no colon separator)
 const MIDLINE_BONES = [
-  'mixamorig:HeadTop_End',
-  'mixamorig:Head',
-  'mixamorig:Neck',
-  'mixamorig:Spine2',
-  'mixamorig:Spine1',
-  'mixamorig:Spine',
-  'mixamorig:Hips',
+  'mixamorigHeadTop_End',
+  'mixamorigHead',
+  'mixamorigNeck',
+  'mixamorigSpine2',
+  'mixamorigSpine1',
+  'mixamorigSpine',
+  'mixamorigHips',
 ]
-const EYE_LINE_BONES_L = ['mixamorig:LeftEye', 'mixamorig:Head']
-const EYE_LINE_BONES_R = ['mixamorig:RightEye', 'mixamorig:Head']
 
 /**
  * Finds a bone by name in the skeleton hierarchy.
@@ -57,7 +55,7 @@ export default function FigureModel({ object, isSelected, matteMode }) {
   const animPathsKeyRef = useRef('')
   const midlineRef = useRef(null)
   const eyeLineRef = useRef(null)
-  const bonesRef = useRef({ midline: [], eyeL: null, eyeR: null, head: null })
+  const bonesRef = useRef({ midline: [], head: null, leftShoulder: null, rightShoulder: null })
 
   // Load character mesh once
   useEffect(() => {
@@ -72,9 +70,9 @@ export default function FigureModel({ object, isSelected, matteMode }) {
       mixerRef.current = new THREE.AnimationMixer(fbx)
       // Resolve skeleton bones for guide lines
       bonesRef.current.midline = MIDLINE_BONES.map(n => findBone(fbx, n)).filter(Boolean)
-      bonesRef.current.eyeL = findBone(fbx, 'mixamorig:LeftEye')
-      bonesRef.current.eyeR = findBone(fbx, 'mixamorig:RightEye')
-      bonesRef.current.head = findBone(fbx, 'mixamorig:Head')
+      bonesRef.current.head = findBone(fbx, 'mixamorigHead')
+      bonesRef.current.leftShoulder = findBone(fbx, 'mixamorigLeftShoulder')
+      bonesRef.current.rightShoulder = findBone(fbx, 'mixamorigRightShoulder')
     }).catch(err => console.warn('FigureModel load error:', err))
     return () => { cancelled = true }
   }, [filePath])
@@ -138,7 +136,7 @@ export default function FigureModel({ object, isSelected, matteMode }) {
 
     // Update midline from bone positions
     const midGeo = midlineRef.current
-    const { midline, eyeL, eyeR, head } = bonesRef.current
+    const { midline, head, leftShoulder, rightShoulder } = bonesRef.current
     if (midGeo && midline.length > 0) {
       const posArr = midGeo.attributes.position
       for (let i = 0; i < midline.length; i++) {
@@ -150,29 +148,33 @@ export default function FigureModel({ object, isSelected, matteMode }) {
       posArr.needsUpdate = true
     }
 
-    // Update eye line from bone positions
+    // Update eye line — horizontal across the head using shoulder width as guide
     const eyeGeo = eyeLineRef.current
     if (eyeGeo && head) {
       const posArr = eyeGeo.attributes.position
-      const left = eyeL || head
-      const right = eyeR || head
 
-      left.getWorldPosition(_bonePos.current)
+      // Get head position for the Y height
+      head.getWorldPosition(_bonePos.current)
       if (charObj?.parent) charObj.parent.worldToLocal(_bonePos.current)
-      const lx = _bonePos.current.x
-      const ly = _bonePos.current.y
-      const lz = _bonePos.current.z
+      const hy = _bonePos.current.y
+      const hz = _bonePos.current.z
 
-      right.getWorldPosition(_bonePos.current)
-      if (charObj?.parent) charObj.parent.worldToLocal(_bonePos.current)
-      const rx = _bonePos.current.x
-      const ry = _bonePos.current.y
-      const rz = _bonePos.current.z
+      // Get shoulder X positions to determine width
+      let lx = _bonePos.current.x - 0.15
+      let rx = _bonePos.current.x + 0.15
+      if (leftShoulder) {
+        leftShoulder.getWorldPosition(_bonePos.current)
+        if (charObj?.parent) charObj.parent.worldToLocal(_bonePos.current)
+        lx = _bonePos.current.x * 0.4
+      }
+      if (rightShoulder) {
+        rightShoulder.getWorldPosition(_bonePos.current)
+        if (charObj?.parent) charObj.parent.worldToLocal(_bonePos.current)
+        rx = _bonePos.current.x * 0.4
+      }
 
-      // Extend slightly beyond the eyes
-      const dx = rx - lx, dy = ry - ly, dz = rz - lz
-      posArr.setXYZ(0, lx - dx * 1.5, ly - dy * 1.5, lz - dz * 1.5)
-      posArr.setXYZ(1, rx + dx * 1.5, ry + dy * 1.5, rz + dz * 1.5)
+      posArr.setXYZ(0, lx, hy, hz)
+      posArr.setXYZ(1, rx, hy, hz)
       posArr.needsUpdate = true
     }
   })
