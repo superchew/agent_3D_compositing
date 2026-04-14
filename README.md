@@ -14,7 +14,7 @@ A desktop app for compositing 3D scenes used as visual prompt guidance for AI-ge
 - **Viewport overlays** — Rule of thirds grid and aspect ratio crop (16:9, 9:16, 2.39:1) as CSS/SVG overlays.
 - **Camera control** — Set FOV via lens equivalents (24mm–135mm) and jump to composition presets (eye level, low angle, bird's eye, close-up, wide, side, 3/4 view). Presets move OrbitControls imperatively.
 - **Clay lighting** — Three-point rig: warm key light, cool blue fill, white rim light. Grey background (#2a2a2a).
-- **FX Puzzle Matte** — Assign solid colors to objects and toggle matte view for flat-colored silhouettes on black, like a VFX ID/puzzle matte. Annotate each color channel for AI prompts.
+- **FX Puzzle Matte** — Assign solid colors to objects and toggle matte view for flat-colored silhouettes. Backdrop keeps its chosen color in matte mode. Annotate each color channel for AI prompts.
 - **Reference photo overlay** — Upload a reference image with adjustable opacity.
 - **Export** — Save the scene render or matte map as PNG.
 
