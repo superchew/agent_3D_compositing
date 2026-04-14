@@ -66,13 +66,18 @@ This project runs in an Apple MDM managed environment. Key constraints:
 - When adding drei features, check if they load external assets (HDR, fonts, models). Use local alternatives instead.
 - Camera presets must call OrbitControls imperatively — updating Zustand state alone does NOT move the camera.
 - TransformControls: disable OrbitControls while dragging to prevent conflict.
+- TransformControls: position/rotation/scale MUST be on the outer wrapper group, NOT on inner components (PropModel, FigureModel). Otherwise gizmo and React fight over transform state.
+- Mixamo FBX bone names have NO colon in Three.js: `mixamorigHead` not `mixamorig:Head`.
+- `applyClayMaterial`: must dispose old textures AND create per-mesh material. Sharing one MeshStandardMaterial across SkinnedMesh causes dark rendering.
+- Animation switching: use immediate `stop()`/`play()`, NOT `fadeOut()`/`fadeIn()` crossfade (breaks with Mixamo clips).
+- Matte mode: file-based models and figures need explicit material swap to MeshBasicMaterial — clay material doesn't respond to matteMode automatically.
 
 ## v2 Feature Update
 
 Spec: `docs/superpowers/specs/2026-04-01-tv-featuring-composer-v2-design.md`
 Plan: `docs/superpowers/plans/2026-04-01-tv-featuring-composer-v2.md`
 
-**Status: ALL 15 TASKS IMPLEMENTED on `feature/v2-features`. Pending visual verification and merge to main.**
+**Status: ALL 15 TASKS + BUG FIXES COMPLETE on `feature/v2-features`. Visually tested. Pending merge to main.**
 
 ### New utility modules
 | File | Purpose |

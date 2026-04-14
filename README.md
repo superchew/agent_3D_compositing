@@ -7,7 +7,7 @@ A desktop app for compositing 3D scenes used as visual prompt guidance for AI-ge
 ## What it does
 
 - **Load 3D models** — Drop GLB, FBX, or STL files into `~/Documents/TV Featuring Composer/models/` and they appear in the Model Library. All models get a uniform grey clay material.
-- **Pose Mixamo figures** — Add male or female characters loaded from FBX files. Select animation presets (Idle, Seated, Lounging, Action, etc.) powered by Three.js AnimationMixer.
+- **Pose Mixamo figures** — Add male or female characters loaded from FBX files. Select animation presets (Idle, Seated, Lounging, Action, etc.) powered by Three.js AnimationMixer. Subtle guide lines trace the spine midline and eye level, following the skeleton pose.
 - **Props & environment** — Procedural primitives (box, sphere, cylinder, plane, wall, camera, light stand) plus file-based props from your models folder.
 - **Transform gizmos** — Select any object and move (G) or rotate (R) it with drei TransformControls.
 - **Green backdrop** — Starts with a green backdrop wall; toggle on/off and pick any color from the toolbar.
