@@ -1,7 +1,7 @@
 {
-  "productName": "Scene Composer",
+  "productName": "TV Featuring Composer",
   "version": "0.1.0",
-  "identifier": "com.scenecomposer.app",
+  "identifier": "com.tvfeaturing.composer",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:5173",
@@ -11,7 +11,7 @@
   "app": {
     "windows": [
       {
-        "title": "3D Scene Composer",
+        "title": "TV Featuring Composer",
         "width": 1400,
         "height": 900,
         "minWidth": 1000,

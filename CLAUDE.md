@@ -66,22 +66,42 @@ This project runs in an Apple MDM managed environment. Key constraints:
 - When adding drei features, check if they load external assets (HDR, fonts, models). Use local alternatives instead.
 - Camera presets must call OrbitControls imperatively — updating Zustand state alone does NOT move the camera.
 - TransformControls: disable OrbitControls while dragging to prevent conflict.
+- TransformControls: position/rotation/scale MUST be on the outer wrapper group, NOT on inner components (PropModel, FigureModel). Otherwise gizmo and React fight over transform state.
+- Mixamo FBX bone names have NO colon in Three.js: `mixamorigHead` not `mixamorig:Head`.
+- `applyClayMaterial`: must dispose old textures AND create per-mesh material. Sharing one MeshStandardMaterial across SkinnedMesh causes dark rendering.
+- Animation switching: use immediate `stop()`/`play()`, NOT `fadeOut()`/`fadeIn()` crossfade (breaks with Mixamo clips).
+- Matte mode: file-based models and figures need explicit material swap to MeshBasicMaterial — clay material doesn't respond to matteMode automatically.
 
-## In-Progress: v2 Feature Update
+## v2 Feature Update
 
 Spec: `docs/superpowers/specs/2026-04-01-tv-featuring-composer-v2-design.md`
+Plan: `docs/superpowers/plans/2026-04-01-tv-featuring-composer-v2.md`
 
-**Status: spec approved, implementation plan not yet written.**
+**Status: ALL 15 TASKS + BUG FIXES COMPLETE on `feature/v2-features`. Visually tested. Pending merge to main.**
 
-Items:
-1. File-based model library (scan `models/` dir, GLB/FBX/STL)
-2. Mixamo FBX figures with AnimationMixer presets
-3. Startup green backdrop mesh
-4. Rule of thirds overlay + aspect ratio (16:9, 9:16, 2.39:1)
-5. Camera preset fix (imperative OrbitControls)
-6. Viewport clay aesthetics (lighting + grid + bg)
-7. Transform gizmos (translate/rotate via `<TransformControls>`)
-8. App rename + DMG Gatekeeper launcher script
+### New utility modules
+| File | Purpose |
+|---|---|
+| `src/lib/tauriBridge.js` | Wraps Tauri invoke with browser fallback (`isTauri()` check) |
+| `src/lib/clayMaterial.js` | `applyClayMaterial(object)` — grey clay MeshStandardMaterial |
+| `src/lib/fileLoader.js` | GLB/FBX/STL loaders from ArrayBuffer + `loadAnimationClip()` |
+
+### Keyboard shortcuts
+| Key | Action |
+|---|---|
+| Q | Select mode |
+| W | Pose mode |
+| E | Matte mode |
+| T | Reference mode |
+| G | Move gizmo (Blender-style) |
+| R | Rotate gizmo (Blender-style) |
+
+Note: Camera mode no longer has a keyboard shortcut (R was reassigned to gizmo rotate). Access via toolbar.
+
+### Models directory setup
+- For development: symlink `~/Documents/TV Featuring Composer/models/` → repo `models/` dir
+- `npm run dev` (browser only): shows procedural primitives only, no file-based models
+- `npm run tauri:dev`: full filesystem access, shows all models from user dir
 
 ## Tauri Desktop Build
 

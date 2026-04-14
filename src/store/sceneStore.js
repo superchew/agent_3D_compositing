@@ -37,15 +37,17 @@ const defaultPose = () => {
   return pose
 }
 
-const defaultFigure = (position = [0, 0, 0]) => ({
+const defaultFigure = (filePath, position = [0, 0, 0]) => ({
   id: nextId(),
   type: 'figure',
-  name: 'Figure',
+  filePath,
+  name: filePath ? filePath.split('/').pop().replace(/\.[^.]+$/, '') : 'Figure',
   position,
   rotation: [0, 0, 0],
   scale: [1, 1, 1],
   matteColor: 'none',
-  pose: defaultPose(),
+  animationPaths: {},     // { label: filePath }
+  activeAnimation: null,
   visible: true,
 })
 
@@ -54,6 +56,18 @@ const defaultModel = (modelType, position = [0, 0, 0]) => ({
   type: 'model',
   modelType,
   name: modelType.charAt(0).toUpperCase() + modelType.slice(1),
+  position,
+  rotation: [0, 0, 0],
+  scale: [1, 1, 1],
+  matteColor: 'none',
+  visible: true,
+})
+
+const defaultFileModel = (filePath, position = [0, 0, 0]) => ({
+  id: nextId(),
+  type: 'fileModel',          // new type alongside 'model' and 'figure'
+  filePath,
+  name: filePath.split('/').pop().replace(/\.[^.]+$/, ''),
   position,
   rotation: [0, 0, 0],
   scale: [1, 1, 1],
@@ -82,12 +96,28 @@ export const useSceneStore = create((set, get) => ({
   cameraPosition: [0, 1.6, 5],
   cameraTarget: [0, 1, 0],
 
+  // Available models scanned from ~/Documents/TV Featuring Composer/models/
+  availableModels: [],   // Array of { filePath, name, format, isFigure }
+  modelsLoaded: false,
+
+  // Backdrop
+  backdropVisible: true,
+  backdropColor: '#22c55e',
+
+  pendingCameraMove: null,   // { position: [x,y,z], target: [x,y,z] } | null
+
+  showRuleOfThirds: false,
+  aspectRatio: '16:9',    // '16:9' | '9:16' | '2.39:1'
+
+  gizmoMode: 'translate',   // 'translate' | 'rotate'
+  orbitEnabled: true,
+
   // Active joint for pose editing
   activeJoint: 'hips',
 
   // --- Object management ---
-  addFigure: (position) => {
-    const fig = defaultFigure(position || [0, 0, 0])
+  addFigure: (filePath, position) => {
+    const fig = defaultFigure(filePath, position || [0, 0, 0])
     set(s => ({ objects: [...s.objects, fig], selectedId: fig.id }))
   },
 
@@ -95,6 +125,42 @@ export const useSceneStore = create((set, get) => ({
     const model = defaultModel(modelType, position || [0, 0, 0])
     set(s => ({ objects: [...s.objects, model], selectedId: model.id }))
   },
+
+  setAvailableModels: (models) => set({ availableModels: models, modelsLoaded: true }),
+
+  addFileModel: (filePath, position) => {
+    // Detect if this is a figure base mesh
+    const FIGURE_BASES = ['human_fig_male_001', 'human_fig_female_001']
+    const name = filePath.split('/').pop().replace(/\.[^.]+$/, '')
+    if (FIGURE_BASES.some(n => name === n)) {
+      const fig = defaultFigure(filePath, position || [0, 0, 0])
+      set(s => ({ objects: [...s.objects, fig], selectedId: fig.id }))
+    } else {
+      const model = defaultFileModel(filePath, position || [0, 0, 0])
+      set(s => ({ objects: [...s.objects, model], selectedId: model.id }))
+    }
+  },
+
+  setFigureAnimationPaths: (id, animationPaths) => {
+    set(s => ({
+      objects: s.objects.map(o => o.id === id ? { ...o, animationPaths } : o)
+    }))
+  },
+
+  setActiveAnimation: (id, label) => {
+    set(s => ({
+      objects: s.objects.map(o => o.id === id ? { ...o, activeAnimation: label } : o)
+    }))
+  },
+
+  setBackdropVisible: (v) => set({ backdropVisible: v }),
+  setBackdropColor: (c) => set({ backdropColor: c }),
+  setCameraPreset: (position, target) => set({ pendingCameraMove: { position, target } }),
+  clearCameraMove: () => set({ pendingCameraMove: null }),
+  setShowRuleOfThirds: (v) => set({ showRuleOfThirds: v }),
+  setAspectRatio: (r) => set({ aspectRatio: r }),
+  setGizmoMode: (m) => set({ gizmoMode: m }),
+  setOrbitEnabled: (v) => set({ orbitEnabled: v }),
 
   removeObject: (id) => {
     set(s => ({

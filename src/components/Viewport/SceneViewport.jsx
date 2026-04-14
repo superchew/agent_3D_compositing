@@ -1,9 +1,9 @@
 import { useRef, useCallback, useEffect } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
-import { OrbitControls, Grid, GizmoHelper, GizmoViewport } from '@react-three/drei'
+import { OrbitControls, TransformControls, Grid, GizmoHelper, GizmoViewport } from '@react-three/drei'
 import * as THREE from 'three'
 import { useSceneStore } from '../../store/sceneStore'
-import HumanoidFigure from './HumanoidFigure'
+import FigureModel from './FigureModel'
 import PropModel from './PropModel'
 
 function CameraSyncer() {
@@ -41,33 +41,108 @@ function ClickPlane({ onClickGround }) {
   )
 }
 
-function SceneObjects({ onSelectObject }) {
-  const { objects, selectedId, mode, matteMode } = useSceneStore()
+function Backdrop() {
+  const { backdropVisible, backdropColor, matteMode } = useSceneStore()
+  if (!backdropVisible) return null
+  return (
+    <group>
+      {/* Vertical back wall */}
+      <mesh position={[0, 2.5, -4]} receiveShadow={!matteMode}>
+        <planeGeometry args={[14, 8]} />
+        {matteMode
+          ? <meshBasicMaterial color={backdropColor} />
+          : <meshStandardMaterial color={backdropColor} roughness={1} metalness={0} />
+        }
+      </mesh>
+      {/* Floor continuation — blends into wall */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, -1.5]} receiveShadow={!matteMode}>
+        <planeGeometry args={[14, 5]} />
+        {matteMode
+          ? <meshBasicMaterial color={backdropColor} />
+          : <meshStandardMaterial color={backdropColor} roughness={1} metalness={0} />
+        }
+      </mesh>
+    </group>
+  )
+}
+
+function SceneObjectsAndGizmo({ onSelectObject }) {
+  const { objects, selectedId, mode, matteMode, gizmoMode, orbitEnabled, setOrbitEnabled, updateObject } = useSceneStore()
+  const selectedGroupRef = useRef(null)
 
   return (
     <>
       {objects.map(obj => {
         const isSelected = obj.id === selectedId
         if (!obj.visible) return null
-        if (obj.type === 'figure') {
-          return (
-            <group key={obj.id} onClick={(e) => { e.stopPropagation(); onSelectObject(obj.id) }}>
-              <HumanoidFigure figure={obj} isSelected={isSelected} matteMode={matteMode} />
-            </group>
-          )
+
+        const handleClick = (e) => {
+          e.stopPropagation()
+          onSelectObject(obj.id)
         }
+
+        const deg = (d) => (d * Math.PI) / 180
+
         return (
-          <group key={obj.id} onClick={(e) => { e.stopPropagation(); onSelectObject(obj.id) }}>
-            <PropModel object={obj} isSelected={isSelected} matteMode={matteMode} />
+          <group
+            key={obj.id}
+            ref={isSelected ? selectedGroupRef : undefined}
+            onClick={handleClick}
+            position={obj.position}
+            rotation={obj.rotation.map(deg)}
+            scale={obj.scale}
+          >
+            {obj.type === 'figure'
+              ? <FigureModel object={obj} isSelected={isSelected} matteMode={matteMode} />
+              : <PropModel object={obj} isSelected={isSelected} matteMode={matteMode} />
+            }
           </group>
         )
       })}
+
+      {/* Transform gizmo for selected object */}
+      {selectedId && selectedGroupRef.current && !matteMode && (
+        <TransformControls
+          key={selectedId}
+          object={selectedGroupRef.current}
+          mode={gizmoMode}
+          onMouseDown={() => setOrbitEnabled(false)}
+          onMouseUp={() => setOrbitEnabled(true)}
+          onChange={() => {
+            const g = selectedGroupRef.current
+            if (!g) return
+            updateObject(selectedId, {
+              position: g.position.toArray(),
+              rotation: [
+                THREE.MathUtils.radToDeg(g.rotation.x),
+                THREE.MathUtils.radToDeg(g.rotation.y),
+                THREE.MathUtils.radToDeg(g.rotation.z),
+              ],
+            })
+          }}
+        />
+      )}
     </>
   )
 }
 
+function CameraController({ controlsRef }) {
+  const { pendingCameraMove, clearCameraMove } = useSceneStore()
+
+  useEffect(() => {
+    const controls = controlsRef.current
+    if (!controls || !pendingCameraMove) return
+    controls.target.set(...pendingCameraMove.target)
+    controls.object.position.set(...pendingCameraMove.position)
+    controls.update()
+    clearCameraMove()
+  }, [pendingCameraMove, controlsRef, clearCameraMove])
+
+  return null
+}
+
 export default function SceneViewport({ canvasRef }) {
-  const { selectObject, matteMode } = useSceneStore()
+  const { selectObject, matteMode, orbitEnabled } = useSceneStore()
   const controlsRef = useRef()
 
   const handleSelectObject = useCallback((id) => {
@@ -84,27 +159,41 @@ export default function SceneViewport({ canvasRef }) {
       ref={canvasRef}
       gl={{ preserveDrawingBuffer: true, antialias: true }}
       camera={{ fov: 45, position: [0, 1.6, 5], near: 0.01, far: 1000 }}
-      style={{ background: matteMode ? '#000000' : '#12161f' }}
+      style={{ background: matteMode ? '#000000' : '#2a2a2a' }}
       shadows
     >
       {!matteMode && (
         <>
-          <ambientLight intensity={0.6} />
+          {/* Key light — warm, upper right front */}
           <directionalLight
-            position={[5, 8, 5]}
-            intensity={1.2}
+            position={[4, 8, 4]}
+            intensity={1.8}
+            color="#fff8f0"
             castShadow
             shadow-mapSize={[2048, 2048]}
           />
-          <directionalLight position={[-3, 4, -3]} intensity={0.4} color="#8eb4ff" />
-          <hemisphereLight args={['#b1e1ff', '#444444', 0.8]} />
+          {/* Fill light — cool blue, upper left */}
+          <directionalLight
+            position={[-4, 3, 2]}
+            intensity={0.5}
+            color="#aac4ff"
+          />
+          {/* Rim light — behind subject */}
+          <directionalLight
+            position={[0, 4, -6]}
+            intensity={0.7}
+            color="#ffffff"
+          />
+          {/* Low ambient to prevent pure black shadows */}
+          <ambientLight intensity={0.25} />
         </>
       )}
       {matteMode && (
         <ambientLight intensity={10} />
       )}
 
-      <SceneObjects onSelectObject={handleSelectObject} />
+      <SceneObjectsAndGizmo onSelectObject={handleSelectObject} />
+      <Backdrop />
       <ClickPlane onClickGround={handleClickGround} />
 
       {!matteMode && (
@@ -112,14 +201,14 @@ export default function SceneViewport({ canvasRef }) {
           position={[0, 0, 0]}
           args={[20, 20]}
           cellSize={0.5}
-          cellThickness={0.4}
-          cellColor="#1e3a5f"
+          cellThickness={0.5}
+          cellColor="#444444"
           sectionSize={2}
-          sectionThickness={0.8}
-          sectionColor="#2d5a9e"
-          fadeDistance={20}
-          fadeStrength={1.5}
-          infiniteGrid
+          sectionThickness={1.0}
+          sectionColor="#666666"
+          fadeDistance={25}
+          fadeStrength={1}
+          infiniteGrid={false}
         />
       )}
       {matteMode && (
@@ -132,6 +221,7 @@ export default function SceneViewport({ canvasRef }) {
       <OrbitControls
         ref={controlsRef}
         makeDefault
+        enabled={orbitEnabled}
         target={[0, 1, 0]}
         minDistance={0.5}
         maxDistance={50}
@@ -146,6 +236,7 @@ export default function SceneViewport({ canvasRef }) {
       )}
 
       <CameraSyncer />
+      <CameraController controlsRef={controlsRef} />
     </Canvas>
   )
 }

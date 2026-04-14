@@ -6,12 +6,12 @@ const TOOLS = [
   { id: 'select', label: 'Select',    icon: MousePointer2,    shortcut: 'Q' },
   { id: 'pose',   label: 'Pose',      icon: PersonStanding,   shortcut: 'W' },
   { id: 'matte',  label: 'Matte',     icon: Layers,           shortcut: 'E' },
-  { id: 'camera', label: 'Camera',    icon: Camera,           shortcut: 'R' },
+  { id: 'camera', label: 'Camera',    icon: Camera,           shortcut: '' },
   { id: 'ref',    label: 'Reference', icon: BookImage,        shortcut: 'T' },
 ]
 
 export default function Toolbar({ onExportRender, onExportMatte }) {
-  const { mode, setMode, matteMode, setMatteMode } = useSceneStore()
+  const { mode, setMode, matteMode, setMatteMode, backdropVisible, setBackdropVisible, backdropColor, setBackdropColor, showRuleOfThirds, setShowRuleOfThirds, aspectRatio, setAspectRatio, gizmoMode, setGizmoMode } = useSceneStore()
 
   return (
     <div className="flex items-center gap-1 bg-[#0f1117] border-b border-slate-800 px-3 h-11 select-none flex-shrink-0">
@@ -20,7 +20,7 @@ export default function Toolbar({ onExportRender, onExportMatte }) {
         <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
           <span className="text-[9px] font-bold text-white">3D</span>
         </div>
-        <span className="text-xs font-semibold text-slate-300 tracking-wide">Scene Composer</span>
+        <span className="text-xs font-semibold text-slate-300 tracking-wide">TV Featuring Composer</span>
       </div>
 
       <div className="h-5 w-px bg-slate-800 mx-1" />
@@ -43,6 +43,65 @@ export default function Toolbar({ onExportRender, onExportMatte }) {
       })}
 
       <div className="flex-1" />
+
+      <div className="h-5 w-px bg-slate-800 mx-1" />
+
+      {/* Gizmo mode */}
+      <button
+        className={`btn py-1.5 px-2.5 text-[11px] gap-1 ${gizmoMode === 'translate' ? 'btn-active' : 'btn-secondary'}`}
+        onClick={() => setGizmoMode('translate')}
+        title="Move (G)"
+      >
+        ↔ Move
+      </button>
+      <button
+        className={`btn py-1.5 px-2.5 text-[11px] gap-1 ${gizmoMode === 'rotate' ? 'btn-active' : 'btn-secondary'}`}
+        onClick={() => setGizmoMode('rotate')}
+        title="Rotate (R)"
+      >
+        ↻ Rotate
+      </button>
+
+      <div className="h-5 w-px bg-slate-800 mx-1" />
+
+      {/* Backdrop toggle */}
+      <button
+        className={`btn py-1.5 px-2.5 text-[11px] gap-1.5 ${backdropVisible ? 'btn-active' : 'btn-secondary'}`}
+        onClick={() => setBackdropVisible(!backdropVisible)}
+        title="Toggle backdrop"
+      >
+        🎬 Backdrop
+      </button>
+      <input
+        type="color"
+        value={backdropColor}
+        title="Backdrop color"
+        className="w-7 h-7 rounded cursor-pointer border border-slate-700 bg-transparent"
+        onChange={e => setBackdropColor(e.target.value)}
+      />
+
+      <div className="h-5 w-px bg-slate-800 mx-1" />
+
+      {/* Rule of thirds */}
+      <button
+        className={`btn py-1.5 px-2.5 text-[11px] ${showRuleOfThirds ? 'btn-active' : 'btn-secondary'}`}
+        onClick={() => setShowRuleOfThirds(!showRuleOfThirds)}
+        title="Rule of thirds"
+      >
+        ⊞ Thirds
+      </button>
+
+      {/* Aspect ratio */}
+      {['16:9', '9:16', '2.39:1'].map(r => (
+        <button
+          key={r}
+          className={`btn py-1.5 px-2 text-[10px] ${aspectRatio === r ? 'btn-active' : 'btn-secondary'}`}
+          onClick={() => setAspectRatio(r)}
+          title={r}
+        >
+          {r}
+        </button>
+      ))}
 
       {/* Matte toggle */}
       <button
